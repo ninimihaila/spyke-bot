@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+venv/
+config.py
+
+# data
+*results/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Pycharm
+.idea/
