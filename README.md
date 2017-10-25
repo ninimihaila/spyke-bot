@@ -5,7 +5,7 @@ Create skype bots easily
 
 ### What's this? ###
 
-Spyke Bot is a colleciton of scripts that can be used
+Spyke Bot is a collection of scripts that can be used
 to make skype bots
 
 
@@ -36,7 +36,7 @@ html
 the html:
     - open the exported html file in chrome (may take a while)
     - open chrome dev tools (press F12)
-    - copy paste the contents of the script and hit enter
+    - copy paste the contents of the script in the console and hit enter
     - it will ask you to save a .json file with the results
 * after this, store the file in `messages/results` and use the generator
 to create a new text from the history

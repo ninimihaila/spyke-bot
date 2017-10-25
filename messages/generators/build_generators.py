@@ -3,7 +3,7 @@ from messages.parsehistory.messageparse import load_messages, parse_message
 
 
 def build_markov(author, json_files):
-    messages = load_messages(json_files=[])
+    messages = load_messages(json_files=json_files)
     markov = Markov()
     if author:
         messages = filter(lambda x: x['author'] == author, messages)

@@ -41,7 +41,7 @@ class Markov(Generator):
             else:
                 self.cache[key] = [w3]
 
-    def generate(self, size):
+    def generate(self, size=None):
         if not size:
             size = random.randint(0, 50)
         seed = random.randint(0, len(self.words) - 3)
