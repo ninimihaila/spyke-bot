@@ -41,11 +41,17 @@ class Markov(Generator):
             else:
                 self.cache[key] = [w3]
 
-    def generate(self, size=None):
+    def generate(self, size=None, seed=None):
         if not size:
             size = random.randint(0, 50)
-        seed = random.randint(0, len(self.words) - 3)
-        seed_word, next_word = self.words[seed], self.words[seed + 1]
+        start_seed = random.randint(0, len(self.words) - 3)
+        if seed:
+            try:
+                seed_word, next_word = seed, self.words[self.words.index(seed) + 1]
+            except:
+                seed = None
+        if not seed:
+            seed_word, next_word = self.words[start_seed], self.words[start_seed + 1]
         w1, w2 = seed_word, next_word
         gen_words = []
         for i in range(size):

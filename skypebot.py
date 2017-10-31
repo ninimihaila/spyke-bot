@@ -4,12 +4,19 @@ from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 
 import config
-import pickle
+import itertools
+# import pickle
+import random
+import time
 from messages.generators.build_generators import build_markov
 
 
-driver = webdriver.Firefox()  # change if you need to use chrome
-driver.set_window_size(1024, 768)
+def debug_signal_handler(signal, frame):
+    import pudb;pu.db
+
+
+import signal
+signal.signal(signal.SIGINT, debug_signal_handler)
 
 
 markov = build_markov(author='', json_files=[
@@ -17,13 +24,14 @@ markov = build_markov(author='', json_files=[
 ])
 
 
-def wait(secs, message=''):
+def wait(secs, message='', silent=False):
     """Wait a number of secs and print progress"""
     print(message) if message else False
     countdown = secs
     while countdown > 0:
         time.sleep(1)
-        print(countdown, ' seconds left')
+        if not silent:
+            print(countdown, ' seconds left')
         countdown -= 1
 
 
@@ -64,34 +72,59 @@ def send_skype_message(driver, message):
     driver.find_element_by_css_selector('.send-button').click()
 
 
+def word_after(line, word):
+    if word in line:
+        position = line.index(word) + len(word)
+        after = ''.join(itertools.takewhile(lambda x: x != ' ', line[position:]))
+    else:
+        after = None
+    return after
+
+
 reply_dict = {
-    'say something': markov.generate,
+    # for example: "spykebot, say something about python"
+    # would make it generate a sentence starting with "python"
+    'say something': {
+        'reply': markov.generate,
+        'param': lambda l: {'seed': word_after(l, ' about ')},
+    },
+    'greet': {
+        'reply': lambda: 'hello',
+    },
     # add other custom commands and replies here
 }
+
 
 def process_message(message):
     for key in reply_dict:
         if key.lower() in message['message'].lower():
-            return reply_dict[key]()
-
-
-def debug_signal_handler(signal, frame):
-    import pudb;pu.db
-
-import signal
-signal.signal(signal.SIGINT, debug_signal_handler)
+            command = reply_dict[key]
+            param = command['param']
+            if param:
+                reply = command['reply'](**param(message['message']))
+            else:
+                reply = command['reply']()
+            return reply
 
 
 if __name__ == '__main__':
+    driver = webdriver.Firefox()  # change if you need to use chrome
+    driver.set_window_size(1024, 768)
     driver.implicitly_wait(10)
     login_to_skype(driver)
-    # send_skype_message(driver, m.generate(size=None))
+    send_skype_message(driver, random.choice(['hello', 'hi']))
     handled = set()
     number_of_messages = 5
     print('Begin listening for messages')
     listening = False
     while True:
         wait(3)
+        if random.randint(0, 500) < 1:
+            message = markov.generate()
+            print('sending message: ', message)
+            send_skype_message(driver, markov.generate())
+            continue
+
         try:
             last_messages = []
             for message in driver.find_elements_by_css_selector('.content')[-number_of_messages:]:
@@ -112,8 +145,11 @@ if __name__ == '__main__':
             # import pudb;pu.db
             for message in last_messages:
                 if message['id'] not in handled and config.SKYPE['callname'] in message['message'].lower():
+                    print(message['name'], 'asked', message['message'], 'at', message['time'])
                     handled.add(message['id'])
-                    send_skype_message(driver, process_message(message))
+                    reply = process_message(message)
+                    send_skype_message(driver, reply)
+                    print('sent reply:', reply)
         except Exception as ex:
             import pudb;pu.db
             print('An error occured: ', ex)
